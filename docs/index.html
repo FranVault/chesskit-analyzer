@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chesskit Analyzer — Chrome Extension</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d0d0f;
+      --surface: #141418;
+      --surface2: #1c1c22;
+      --border: rgba(255,255,255,0.07);
+      --accent: #4f9eff;
+      --accent2: #c4a44d;
+      --text: #e8e8f0;
+      --muted: #6b6b80;
+      --chess-light: #f0d9b5;
+      --chess-dark: #b58863;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    /* ── NOISE TEXTURE ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.4;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      position: relative;
+      padding: 80px 24px;
+      overflow: hidden;
+    }
+
+    .hero-glow {
+      position: absolute;
+      width: 800px;
+      height: 800px;
+      background: radial-gradient(circle, rgba(79,158,255,0.06) 0%, transparent 70%);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    .hero-board {
+      position: absolute;
+      right: -120px;
+      top: 50%;
+      transform: translateY(-50%) rotate(12deg);
+      opacity: 0.06;
+      font-size: 11px;
+      line-height: 1;
+      letter-spacing: 0;
+      display: grid;
+      grid-template-columns: repeat(8, 36px);
+      grid-template-rows: repeat(8, 36px);
+      pointer-events: none;
+    }
+
+    .hero-board .sq {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+
+    .hero-board .sq.light { background: var(--chess-light); }
+    .hero-board .sq.dark  { background: var(--chess-dark); }
+
+    .hero-inner {
+      max-width: 760px;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid rgba(79,158,255,0.25);
+      background: rgba(79,158,255,0.06);
+      color: var(--accent);
+      padding: 6px 14px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+      animation: fadeUp 0.6s ease both;
+    }
+
+    .badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 2s ease infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(48px, 8vw, 88px);
+      font-weight: 900;
+      line-height: 1.0;
+      letter-spacing: -2px;
+      margin-bottom: 24px;
+      animation: fadeUp 0.6s 0.1s ease both;
+    }
+
+    h1 em {
+      font-style: normal;
+      background: linear-gradient(135deg, var(--accent2), #e8c870);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-sub {
+      font-size: 18px;
+      color: var(--muted);
+      font-weight: 300;
+      line-height: 1.7;
+      max-width: 520px;
+      margin: 0 auto 48px;
+      animation: fadeUp 0.6s 0.2s ease both;
+    }
+
+    .hero-sub strong { color: var(--text); font-weight: 500; }
+
+    .hero-cta {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+      animation: fadeUp 0.6s 0.3s ease both;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--accent);
+      color: #fff;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      padding: 14px 28px;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: all 0.2s;
+      box-shadow: 0 0 30px rgba(79,158,255,0.2);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 40px rgba(79,158,255,0.35);
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 400;
+      padding: 14px 28px;
+      border-radius: 8px;
+      text-decoration: none;
+      background: var(--surface);
+      transition: all 0.2s;
+    }
+
+    .btn-secondary:hover {
+      border-color: rgba(255,255,255,0.18);
+      transform: translateY(-2px);
+    }
+
+    /* ── DEMO SCREENSHOT ── */
+    .demo-section {
+      padding: 0 24px 120px;
+      display: flex;
+      justify-content: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .demo-window {
+      max-width: 900px;
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 40px 120px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04);
+      animation: fadeUp 0.8s 0.4s ease both;
+    }
+
+    .demo-bar {
+      background: var(--surface2);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .demo-dots { display: flex; gap: 7px; }
+    .demo-dots span {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+    .demo-dots span:nth-child(1) { background: #ff5f57; }
+    .demo-dots span:nth-child(2) { background: #ffbd2e; }
+    .demo-dots span:nth-child(3) { background: #28c840; }
+
+    .demo-url {
+      flex: 1;
+      background: var(--surface);
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .demo-body {
+      background: #1a1d2e;
+      padding: 40px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      align-items: start;
+    }
+
+    /* Simulated modal */
+    .sim-modal {
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+
+    .sim-modal-header {
+      background: linear-gradient(135deg, #2e7d32, #388e3c);
+      padding: 20px;
+      text-align: center;
+    }
+
+    .sim-trophy { font-size: 32px; margin-bottom: 4px; }
+
+    .sim-title {
+      font-family: 'Playfair Display', serif;
+      color: #fff;
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .sim-sub { color: rgba(255,255,255,0.7); font-size: 12px; margin-top: 2px; }
+
+    .sim-stats {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      padding: 16px 20px;
+      background: #f9f9f9;
+      border-bottom: 1px solid #eee;
+    }
+
+    .sim-stat { text-align: center; }
+    .sim-stat-num { font-size: 18px; font-weight: 700; color: #333; }
+    .sim-stat-num.g { color: #2e7d32; }
+    .sim-stat-num.b { color: #1565c0; }
+    .sim-stat-label { font-size: 10px; color: #999; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .sim-btns {
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .sim-btn {
+      padding: 10px;
+      border-radius: 6px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .sim-btn.review { background: #4caf50; color: #fff; }
+    .sim-btn.row { display: flex; gap: 8px; }
+    .sim-btn.nueva { flex: 1; background: #f0f0f0; color: #555; }
+    .sim-btn.revancha { flex: 1; background: #f0f0f0; color: #555; }
+
+    .sim-btn.chesskit {
+      background: linear-gradient(135deg, #1565c0, #1a73e8);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 13px;
+      box-shadow: 0 4px 12px rgba(26,115,232,0.3);
+      animation: glowPulse 2s ease infinite;
+    }
+
+    @keyframes glowPulse {
+      0%, 100% { box-shadow: 0 4px 12px rgba(26,115,232,0.3); }
+      50% { box-shadow: 0 4px 24px rgba(26,115,232,0.6); }
+    }
+
+    /* Simulated Chesskit */
+    .sim-chesskit {
+      background: #1e1e2e;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .sim-ck-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      font-size: 13px;
+      color: rgba(255,255,255,0.5);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sim-ck-title { color: #fff; font-weight: 600; font-size: 14px; }
+
+    .sim-ck-game {
+      margin: 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(79,158,255,0.4);
+      background: rgba(79,158,255,0.06);
+      padding: 12px;
+    }
+
+    .sim-ck-players {
+      font-size: 13px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .sim-ck-you { color: #4f9eff; font-weight: 600; }
+    .sim-ck-vs { color: rgba(255,255,255,0.3); font-size: 11px; }
+    .sim-ck-rival { color: rgba(255,255,255,0.6); }
+    .sim-ck-badge {
+      margin-left: auto;
+      background: #1b5e20;
+      color: #81c784;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .sim-ck-meta {
+      font-size: 11px;
+      color: rgba(255,255,255,0.3);
+      display: flex;
+      gap: 12px;
+    }
+
+    .sim-ck-analyzing {
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.5);
+    }
+
+    .sim-spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(79,158,255,0.2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .arrow-connector {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: var(--accent);
+      opacity: 0.5;
+      align-self: center;
+    }
+
+    /* ── HOW IT WORKS ── */
+    .section {
+      padding: 100px 24px;
+      max-width: 1000px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(32px, 5vw, 52px);
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: 60px;
+      letter-spacing: -1px;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 2px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .step {
+      background: var(--surface);
+      padding: 36px 28px;
+      position: relative;
+      transition: background 0.2s;
+    }
+
+    .step:hover { background: var(--surface2); }
+
+    .step-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 56px;
+      font-weight: 900;
+      color: rgba(255,255,255,0.04);
+      line-height: 1;
+      margin-bottom: 16px;
+      letter-spacing: -2px;
+    }
+
+    .step-icon {
+      font-size: 28px;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .step-title {
+      font-size: 16px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .step-desc {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    /* ── FEATURES ── */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-top: 60px;
+    }
+
+    .feature {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px;
+      transition: all 0.2s;
+    }
+
+    .feature:hover {
+      border-color: rgba(79,158,255,0.2);
+      transform: translateY(-3px);
+    }
+
+    .feature-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: rgba(79,158,255,0.08);
+      border: 1px solid rgba(79,158,255,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      margin-bottom: 16px;
+    }
+
+    .feature-title {
+      font-size: 15px;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .feature-desc {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    /* ── INSTALL ── */
+    .install-section {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 100px 24px;
+      position: relative;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    .install-section::before {
+      content: '';
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(196,164,77,0.04) 0%, transparent 70%);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .install-inner {
+      max-width: 700px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .code-block {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px 24px;
+      margin: 12px 0;
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .code-block .prompt { color: var(--accent2); user-select: none; }
+    .code-block .cmd { color: var(--text); flex: 1; }
+    .code-step { color: var(--muted); font-size: 12px; margin-bottom: 4px; font-family: 'DM Mono', monospace; }
+
+    .install-steps {
+      margin-top: 36px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .install-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      border-radius: 8px;
+      transition: background 0.15s;
+    }
+
+    .install-item:hover { background: var(--surface2); }
+
+    .install-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+
+    .install-text { font-size: 14px; color: var(--text); line-height: 1.5; }
+    .install-text code {
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      background: var(--surface2);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--accent);
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      padding: 60px 24px;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid var(--border);
+    }
+
+    .footer-logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .footer-logo span { color: var(--accent2); }
+
+    .footer-links {
+      display: flex;
+      gap: 24px;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
+
+    .footer-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 0.2s;
+    }
+
+    .footer-links a:hover { color: var(--text); }
+
+    .footer-copy { font-size: 13px; color: var(--muted); }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: none;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 700px) {
+      .demo-body { grid-template-columns: 1fr; }
+      .arrow-connector { transform: rotate(90deg); }
+      .steps { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-glow"></div>
+
+  <!-- Decorative chess board -->
+  <div class="hero-board" id="heroBoard"></div>
+
+  <div class="hero-inner">
+    <div class="badge">
+      <span class="badge-dot"></span>
+      Free Chrome Extension
+    </div>
+
+    <h1>Analyze your games.<br><em>Instantly.</em></h1>
+
+    <p class="hero-sub">
+      Finish a game on Chess.com and jump straight into
+      <strong>Chesskit analysis</strong> with one click —
+      no tabs, no searching, no copy-pasting. Automatic.
+    </p>
+
+    <div class="hero-cta">
+      <a href="https://github.com/FranVault/chesskit-analyzer" class="btn-primary">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        View on GitHub
+      </a>
+      <a href="#install" class="btn-secondary">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+        Install Extension
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- DEMO -->
+<section class="demo-section">
+  <div class="demo-window reveal">
+    <div class="demo-bar">
+      <div class="demo-dots">
+        <span></span><span></span><span></span>
+      </div>
+      <div class="demo-url">chess.com/game/166262981018</div>
+    </div>
+    <div class="demo-body">
+
+      <!-- Chess.com modal simulation -->
+      <div class="sim-modal">
+        <div class="sim-modal-header">
+          <div class="sim-trophy">🏆</div>
+          <div class="sim-title">¡Has Ganado!</div>
+          <div class="sim-sub">por jaque mate</div>
+        </div>
+        <div class="sim-stats">
+          <div class="sim-stat">
+            <div class="sim-stat-num g">4</div>
+            <div class="sim-stat-label">Genial</div>
+          </div>
+          <div class="sim-stat">
+            <div class="sim-stat-num">33</div>
+            <div class="sim-stat-label">Mejores</div>
+          </div>
+          <div class="sim-stat">
+            <div class="sim-stat-num b">25</div>
+            <div class="sim-stat-label">Excelentes</div>
+          </div>
+        </div>
+        <div class="sim-btns">
+          <div class="sim-btn review">⭐ Revisión de partida</div>
+          <div class="sim-btn row">
+            <div class="sim-btn nueva">+ Nueva 3|2</div>
+            <div class="sim-btn revancha">↺ Revancha</div>
+          </div>
+          <div class="sim-btn chesskit">♟ Analizar en Chesskit</div>
+        </div>
+      </div>
+
+      <div class="arrow-connector">→</div>
+
+      <!-- Chesskit simulation -->
+      <div class="sim-chesskit">
+        <div class="sim-ck-header">
+          <div class="sim-ck-title">Chesskit</div>
+          <span style="margin-left:auto">Game Analysis</span>
+        </div>
+        <div class="sim-ck-game">
+          <div class="sim-ck-players">
+            <span class="sim-ck-you">FranVault</span>
+            <span class="sim-ck-vs">vs</span>
+            <span class="sim-ck-rival">tfaruque</span>
+            <span class="sim-ck-badge">1-0</span>
+          </div>
+          <div class="sim-ck-meta">
+            <span>⏱ 3m+2</span>
+            <span># 99 moves</span>
+            <span>📅 21/3/2026</span>
+          </div>
+        </div>
+        <div class="sim-ck-analyzing">
+          <div class="sim-spinner"></div>
+          Analyzing with Stockfish 17...
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="section">
+  <div class="section-label reveal">How it works</div>
+  <div class="section-title reveal">Three seconds.<br>Zero friction.</div>
+
+  <div class="steps reveal">
+    <div class="step">
+      <div class="step-num">01</div>
+      <span class="step-icon">♟</span>
+      <div class="step-title">Finish your game</div>
+      <div class="step-desc">Play on Chess.com as usual. The extension runs in the background — no setup needed mid-game.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <span class="step-icon">🔵</span>
+      <div class="step-title">Click the blue button</div>
+      <div class="step-desc">When the result modal appears, a new "Analyze in Chesskit" button shows up alongside the usual options.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <span class="step-icon">⚡</span>
+      <div class="step-title">Auto-loaded & ready</div>
+      <div class="step-desc">Chesskit opens in a new tab with your username filled in and the latest game already selected. Just click Analyze.</div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="section" style="padding-top:0">
+  <div class="section-label reveal">Features</div>
+  <div class="section-title reveal">Built for speed.</div>
+
+  <div class="features reveal">
+    <div class="feature">
+      <div class="feature-icon">🎯</div>
+      <div class="feature-title">Zero configuration</div>
+      <div class="feature-desc">The extension auto-detects your Chess.com username from the page. No accounts, no API keys.</div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">⚡</div>
+      <div class="feature-title">Instant redirect</div>
+      <div class="feature-desc">Opens Chesskit, fills your username, and selects the latest game automatically. Saves ~30 seconds every game.</div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🔒</div>
+      <div class="feature-title">Privacy first</div>
+      <div class="feature-desc">No data sent anywhere. Your username is stored locally in Chrome. The extension only reads what's on the page.</div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🆓</div>
+      <div class="feature-title">Completely free</div>
+      <div class="feature-desc">Open source, MIT licensed. No ads, no tracking, no premium tier. Just a small tool that does one thing well.</div>
+    </div>
+  </div>
+</section>
+
+<!-- INSTALL -->
+<section class="install-section" id="install">
+  <div class="install-inner">
+    <div class="section-label reveal">Installation</div>
+    <div class="section-title reveal" style="margin-bottom:40px">Up and running<br>in 60 seconds.</div>
+
+    <div class="install-steps reveal">
+      <div class="install-item">
+        <div class="install-num">1</div>
+        <div class="install-text">Download and unzip <code>chesskit-extension.zip</code> from the <a href="https://github.com/FranVault/chesskit-analyzer/releases" style="color:var(--accent); text-decoration:none">Releases page</a></div>
+      </div>
+      <div class="install-item">
+        <div class="install-num">2</div>
+        <div class="install-text">Open Chrome and navigate to <code>chrome://extensions/</code></div>
+      </div>
+      <div class="install-item">
+        <div class="install-num">3</div>
+        <div class="install-text">Enable <strong style="color:var(--text)">Developer mode</strong> in the top-right toggle</div>
+      </div>
+      <div class="install-item">
+        <div class="install-num">4</div>
+        <div class="install-text">Click <strong style="color:var(--text)">Load unpacked</strong> and select the unzipped folder</div>
+      </div>
+      <div class="install-item">
+        <div class="install-num">5</div>
+        <div class="install-text">Play a game on Chess.com — the blue button will appear when it ends ✓</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">♟ Chesskit <span>Analyzer</span></div>
+  <div class="footer-links">
+    <a href="https://github.com/FranVault/chesskit-analyzer">GitHub</a>
+    <a href="https://chesskit.org">Chesskit</a>
+    <a href="https://chess.com">Chess.com</a>
+  </div>
+  <div class="footer-copy">MIT License · Made by FranVault · Not affiliated with Chess.com or Chesskit</div>
+</footer>
+
+<script>
+  // Build decorative chess board
+  const pieces = {
+    r: '♜', n: '♞', b: '♝', q: '♛', k: '♚', p: '♟',
+    R: '♖', N: '♘', B: '♗', Q: '♕', K: '♔', P: '♙'
+  };
+  const layout = [
+    'rnbqkbnr',
+    'pppppppp',
+    '        ',
+    '        ',
+    '        ',
+    '        ',
+    'PPPPPPPP',
+    'RNBQKBNR'
+  ];
+  const board = document.getElementById('heroBoard');
+  layout.forEach((row, r) => {
+    [...row].forEach((p, c) => {
+      const sq = document.createElement('div');
+      sq.className = 'sq ' + ((r + c) % 2 === 0 ? 'light' : 'dark');
+      sq.textContent = pieces[p] || '';
+      board.appendChild(sq);
+    });
+  });
+
+  // Scroll reveal
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
