@@ -236,7 +236,7 @@
     .section-title {
       font-family: 'Playfair Display', serif;
       font-size: clamp(32px, 5vw, 52px); font-weight: 700;
-      line-height: 1.1; margin-bottom: 60px; letter-spacing: -1px; color: #0d1f30;
+      line-height: 1.1; margin-bottom: 10px; letter-spacing: -1px; color: #0d1f30;
     }
 
     .steps {
@@ -413,8 +413,8 @@
 
 <!-- HOW IT WORKS -->
 <section class="section">
-  <div class="section-label reveal">How it works</div>
-  <div class="section-title reveal">Three seconds.<br>Zero friction.</div>
+  <div class="section-title reveal">How it works</div>
+  <div class="section-label reveal" style="font-size:16px;text-transform:none;letter-spacing:0;color:var(--muted);font-weight:300;margin-bottom:20px">Three seconds. Zero friction.</div>
 
   <div class="steps reveal">
     <div class="step">
@@ -440,8 +440,8 @@
 
 <!-- FEATURES -->
 <section class="section" style="padding-top:0">
-  <div class="section-label reveal">Features</div>
-  <div class="section-title reveal">Built for speed.</div>
+  <div class="section-title reveal">Features</div>
+  <div class="section-label reveal" style="font-size:16px;text-transform:none;letter-spacing:0;color:var(--muted);font-weight:300;margin-bottom:20px">Built for speed.</div>
 
   <div class="features reveal">
     <div class="feature">
@@ -471,13 +471,25 @@
 <section class="install-section" id="install">
   <div class="chess-deco board-footer" id="boardFooter"></div>
   <div class="install-inner">
-    <div class="section-label reveal">Installation</div>
-    <div class="section-title reveal" style="margin-bottom:40px">Up and running<br>in 60 seconds.</div>
+    <div class="section-title reveal">Installation</div>
+    <div class="section-label reveal" style="font-size:16px;text-transform:none;letter-spacing:0;color:var(--muted);font-weight:300;margin-bottom:20px">Up and running in 60 seconds.</div>
 
     <div class="install-steps reveal">
-      <div class="install-item">
-        <div class="install-num">1</div>
-        <div class="install-text">Download and unzip <code>chesskit-extension.zip</code> from the <a href="https://github.com/vaultfran/chesskit-analyzer/releases" target="_blank">Releases page</a></div>
+      <div class="install-item" style="background: rgba(26,115,232,0.08); border: 1px solid rgba(26,115,232,0.2); border-radius: 10px;">
+        <div class="install-num" style="background: #1a73e8; color: #fff; border-color: #1a73e8;">1</div>
+        <div class="install-text">
+          <a href="https://github.com/vaultfran/chesskit-analyzer/releases" target="_blank" style="
+            display: inline-flex; align-items: center; gap: 8px;
+            background: #1a73e8; color: #fff;
+            padding: 10px 20px; border-radius: 8px;
+            font-weight: 700; font-size: 14px; text-decoration: none;
+            box-shadow: 0 4px 14px rgba(26,115,232,0.35);
+            transition: all 0.2s;
+          ">
+            ⬇ Download chesskit-extension.zip
+          </a>
+          <span style="display:block; margin-top: 6px; font-size: 12px; color: var(--muted);">From the GitHub Releases page — then unzip the folder</span>
+        </div>
       </div>
       <div class="install-item">
         <div class="install-num">2</div>
