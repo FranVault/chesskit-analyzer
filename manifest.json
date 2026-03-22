@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "Chesskit Quick Analyze",
+  "version": "5.0",
+  "description": "Abre y carga automáticamente tu última partida en Chesskit desde Chess.com",
+  "permissions": ["storage", "tabs"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": "icon.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://www.chess.com/*", "*://chess.com/*"],
+      "js": ["content_chess.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["*://chesskit.org/*"],
+      "js": ["content_chesskit.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "16": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  }
+}
