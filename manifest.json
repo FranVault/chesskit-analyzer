@@ -1,12 +1,16 @@
 {
   "manifest_version": 3,
-  "name": "Chesskit Quick Analyze",
-  "version": "5.0",
-  "description": "Abre y carga automáticamente tu última partida en Chesskit desde Chess.com",
+  "name": "Chesskit Analyzer",
+  "version": "1.2",
+  "description": "One-click: finish a Chess.com game and jump straight to Chesskit analysis automatically.",
   "permissions": ["storage", "tabs"],
   "action": {
     "default_popup": "popup.html",
-    "default_icon": "icon.png"
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
   },
   "content_scripts": [
     {
@@ -21,8 +25,8 @@
     }
   ],
   "icons": {
-    "16": "icon.png",
-    "48": "icon.png",
-    "128": "icon.png"
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
   }
 }
