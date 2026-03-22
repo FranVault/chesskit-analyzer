@@ -2,11 +2,10 @@ const input  = document.getElementById('username');
 const btn    = document.getElementById('save');
 const status = document.getElementById('status');
 
-// Cargar el usuario guardado al abrir el popup
 chrome.storage.local.get('chesskitSavedUsername', (r) => {
   if (r.chesskitSavedUsername) {
     input.value = r.chesskitSavedUsername;
-    status.textContent = '✓ Usuario guardado';
+    status.textContent = '✓ Username saved';
     status.className = 'ok';
   }
 });
@@ -14,12 +13,12 @@ chrome.storage.local.get('chesskitSavedUsername', (r) => {
 btn.addEventListener('click', () => {
   const val = input.value.trim();
   if (!val) {
-    status.textContent = 'Ingresá tu nombre de usuario';
+    status.textContent = 'Please enter your username';
     status.className = 'err';
     return;
   }
   chrome.storage.local.set({ chesskitSavedUsername: val }, () => {
-    status.textContent = '✓ Guardado correctamente';
+    status.textContent = '✓ Saved successfully';
     status.className = 'ok';
   });
 });
