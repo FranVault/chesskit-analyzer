@@ -31,15 +31,15 @@ This extension adds a single **"Analyze in Chesskit"** button to the Chess.com e
 ## Demo
 
 ```
-Chess.com result modal          Chesskit (auto-loaded)
-┌─────────────────────┐        ┌──────────────────────────┐
-│  🏆 ¡Has Ganado!    │        │  Load a game             │
-│                     │  ───►  │  Username: FranVault ✓   │
-│  [Revisión]         │        │  > FranVault vs tfaruque  │
-│  [Nueva] [Revancha] │        │    ● Selected             │
-│  [♟ Analizar en     │        └──────────────────────────┘
-│    Chesskit]  ◄──── │
-└─────────────────────┘
+Chess.com result modal           Chesskit (auto-loaded)
+┌──────────────────────┐        ┌───────────────────────────┐
+│  🏆 You Won!!       │         │  Load a game              │
+│                      │  ───►  │  Username: FranVault ✓    │
+│  [Game Review]       │        │  > FranVault vs tfaruque  │
+│  [New] [Rematch]     │        │    ● Selected             │
+│  [♟ Analyze in      │        └───────────────────────────┘
+│    Chesskit]  ◄───── │
+└──────────────────────┘
 ```
 
 ---
