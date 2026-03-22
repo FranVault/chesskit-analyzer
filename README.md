@@ -84,8 +84,6 @@ chesskit-extension/
 
 ## Permissions
 
-| Permission | Why |
-|---|---|
 | `storage` | Save your Chess.com username locally |
 | `tabs` | Open Chesskit in a new tab |
 
