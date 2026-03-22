@@ -155,14 +155,37 @@
       font-size: 12px; color: var(--muted);
     }
 
-    /* THE KEY FIX: force side by side always */
     .demo-body {
-      background: #252830;
-      padding: 36px;
+      background: #1a1d24;
+      padding: 32px;
       display: grid;
-      grid-template-columns: 1fr auto 1fr;
-      gap: 24px;
-      align-items: center;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .demo-label {
+      font-size: 11px;
+      font-family: "DM Mono", monospace;
+      color: var(--muted);
+      margin-bottom: 10px;
+      letter-spacing: 0.5px;
+    }
+
+    .demo-screenshot {
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+    }
+
+    .demo-screenshot img {
+      width: 100%;
+      display: block;
+    }
+
+    .demo-arrow {
+      display: none;
     }
 
     /* CHESS.COM MODAL SIMULATION */
@@ -469,61 +492,17 @@
     </div>
     <div class="demo-body">
 
-      <!-- Chess.com modal -->
-      <div class="sim-modal">
-        <div class="sim-modal-header">
-          <span class="sim-trophy">🏆</span>
-          <div class="sim-title">You Won!</div>
-          <div class="sim-sub">by checkmate</div>
-        </div>
-        <div class="sim-stats">
-          <div class="sim-stat">
-            <div class="sim-stat-num g">4</div>
-            <div class="sim-stat-label">Brilliant</div>
-          </div>
-          <div class="sim-stat">
-            <div class="sim-stat-num">33</div>
-            <div class="sim-stat-label">Best</div>
-          </div>
-          <div class="sim-stat">
-            <div class="sim-stat-num b">25</div>
-            <div class="sim-stat-label">Excellent</div>
-          </div>
-        </div>
-        <div class="sim-btns">
-          <div class="sim-btn review">⭐ Game Review</div>
-          <div class="sim-btn row">
-            <div class="sim-btn nueva">+ New 3|2</div>
-            <div class="sim-btn revancha">↺ Rematch</div>
-          </div>
-          <div class="sim-btn chesskit">♟ Analyze in Chesskit</div>
+      <div>
+        <div class="demo-label">① Chess.com — click the blue button</div>
+        <div class="demo-screenshot">
+          <img src="screenshot-chess-crop.png" alt="Chess.com result modal with Analyze in Chesskit button">
         </div>
       </div>
 
-      <div class="arrow-connector">→</div>
-
-      <!-- Chesskit -->
-      <div class="sim-chesskit">
-        <div class="sim-ck-header">
-          <div class="sim-ck-title">Chesskit</div>
-          <span class="sim-ck-subtitle">Game Analysis</span>
-        </div>
-        <div class="sim-ck-game">
-          <div class="sim-ck-players">
-            <span class="sim-ck-you">FranVault</span>
-            <span class="sim-ck-vs">vs</span>
-            <span class="sim-ck-rival">tfaruque</span>
-            <span class="sim-ck-badge">1-0</span>
-          </div>
-          <div class="sim-ck-meta">
-            <span>⏱ 3m+2</span>
-            <span># 99 moves</span>
-            <span>📅 21/3/2026</span>
-          </div>
-        </div>
-        <div class="sim-ck-analyzing">
-          <div class="sim-spinner"></div>
-          Analyzing with Stockfish 17...
+      <div>
+        <div class="demo-label">② Chesskit — game auto-loaded & analyzed</div>
+        <div class="demo-screenshot">
+          <img src="screenshot-chesskit-crop.png" alt="Chesskit with game automatically loaded and analyzed">
         </div>
       </div>
 
@@ -596,7 +575,7 @@
     <div class="install-steps reveal">
       <div class="install-item">
         <div class="install-num">1</div>
-        <div class="install-text">Download and unzip <code>chesskit-extension.zip</code> from the <a href="https://github.com/vaultfran/chesskit-analyzer/releases" target="_blank">Releases page</a></div>
+        <div class="install-text">Download and unzip <code>chesskit-extension.zip</code> from the <a href="https://github.com/vaultfran/chesskit-analyzer/releases">Releases page</a></div>
       </div>
       <div class="install-item">
         <div class="install-num">2</div>
